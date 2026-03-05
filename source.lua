@@ -1696,6 +1696,29 @@ function RayfieldLibrary:CreateWindow(Settings)
 	Elements.Visible = false
 	LoadingFrame.Visible = true
 
+        if Settings.Preview then
+            task.spawn(function()
+                -- Instant UI Update: Bypass loading animation
+                LoadingFrame.Visible = false
+                Main.Visible = true
+                Main.BackgroundTransparency = 0
+                Main.Shadow.Image.ImageTransparency = 0.6
+                
+                -- Set final size immediately
+                Main.Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)
+                Topbar.Visible = true
+                Elements.Visible = true
+                
+                -- Make sure tabs are visible
+                for _, TabPage in ipairs(Elements:GetChildren()) do
+                    if TabPage:IsA("ScrollingFrame") then
+                        TabPage.Visible = true
+                    end
+                end
+            end)
+            return window -- Exit early so the standard animation below doesn't run
+        end
+
 	if not Settings.DisableRayfieldPrompts then
 		task.spawn(function()
 			while true do
