@@ -3507,9 +3507,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 			end
 		end)
 
-			-- [[ REPLACEMENT START ]]
+	-- If Preview is true, load instantly
 	if Settings.Preview then
-		-- Instant Load: Skip all animations
 		LoadingFrame.Visible = false
 		Main.Visible = true
 		Main.BackgroundTransparency = 0
@@ -3532,8 +3531,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 		for _, TabPage in ipairs(Elements:GetChildren()) do
 			if TabPage:IsA("ScrollingFrame") then TabPage.Visible = true end
 		end
-	else
-		-- Original Animation Logic
+	else 
+		-- If Preview is false, run the normal animation
 		Elements.Visible = true
 		task.wait(1.1)
 		TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 390, 0, 90)}):Play()
@@ -3575,25 +3574,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 		task.wait(0.05)
 		TweenService:Create(Topbar.Hide, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
 		task.wait(0.3)
-	end
-
-	if dragBar then
-		TweenService:Create(dragBarCosmetic, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.7}):Play()
-	end
-
-	function Window.ModifyTheme(NewTheme)
-		local success = pcall(ChangeTheme, NewTheme)
-		if not success then
-			RayfieldLibrary:Notify({Title = 'Unable to Change Theme', Content = 'We are unable find a theme on file.', Image = 4400704299})
-		else
-			RayfieldLibrary:Notify({Title = 'Theme Changed', Content = 'Successfully changed theme to '..(typeof(NewTheme) == 'string' and NewTheme or 'Custom Theme')..'.', Image = 4483362748})
-		end
-	end
-
-	pcall(function()
-		createSettings(Window)
-	end)
-	-- [[ REPLACEMENT END ]]
+	end -- This "end" closes the if/else logic
 
 	if not success then warn('Rayfield had an issue creating settings.') end
 
