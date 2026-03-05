@@ -1692,28 +1692,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 		end
 	end
 
-	-- If Preview is true, skip straight to the GUI
-	if Settings.Preview then
-		Topbar.Visible = true
-		Elements.Visible = true
-		LoadingFrame.Visible = false
-		
-		-- Ensure the main window isn't invisible/transparent
-		if Main then
-			Main.GroupTransparency = 0
-		end
-		
-		-- Show the dragbar immediately
-		if dragBar then
-			dragBar.Visible = true
-			dragBarCosmetic.BackgroundTransparency = 0
-		end
-	else
-		-- Otherwise, perform the standard Rayfield loading sequence
-		Topbar.Visible = false
-		Elements.Visible = false
-		LoadingFrame.Visible = true
-	end
+	Topbar.Visible = false
+	Elements.Visible = false
+	LoadingFrame.Visible = true
 
 	pcall(function()
 		if not Settings.ConfigurationSaving.FileName then
