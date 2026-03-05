@@ -1696,29 +1696,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 	Elements.Visible = false
 	LoadingFrame.Visible = true
 
-        if Settings.Preview then
-            task.spawn(function()
-                -- Instant UI Update: Bypass loading animation
-                LoadingFrame.Visible = false
-                Main.Visible = true
-                Main.BackgroundTransparency = 0
-                Main.Shadow.Image.ImageTransparency = 0.6
-                
-                -- Set final size immediately
-                Main.Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)
-                Topbar.Visible = true
-                Elements.Visible = true
-                
-                -- Make sure tabs are visible
-                for _, TabPage in ipairs(Elements:GetChildren()) do
-                    if TabPage:IsA("ScrollingFrame") then
-                        TabPage.Visible = true
-                    end
-                end
-            end)
-            return window -- Exit early so the standard animation below doesn't run
-        end
-
 	if not Settings.DisableRayfieldPrompts then
 		task.spawn(function()
 			while true do
@@ -3530,53 +3507,75 @@ function RayfieldLibrary:CreateWindow(Settings)
 			end
 		end)
 
-		return Tab
-	end
+			-- [[ REPLACEMENT START ]]
+	if Settings.Preview then
+		-- Instant Load: Skip all animations
+		LoadingFrame.Visible = false
+		Main.Visible = true
+		Main.BackgroundTransparency = 0
+		Main.Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)
+		Main.Shadow.Image.ImageTransparency = 0.6
+		
+		Topbar.Visible = true
+		Topbar.BackgroundTransparency = 0
+		Topbar.CornerRepair.BackgroundTransparency = 0
+		Topbar.Divider.Size = UDim2.new(1, 0, 0, 1)
+		Topbar.Title.TextTransparency = 0
+		Topbar.Search.ImageTransparency = 0.8
+		if Topbar:FindFirstChild('Settings') then
+			Topbar.Settings.ImageTransparency = 0.8
+		end
+		Topbar.ChangeSize.ImageTransparency = 0.8
+		Topbar.Hide.ImageTransparency = 0.8
+		
+		Elements.Visible = true
+		for _, TabPage in ipairs(Elements:GetChildren()) do
+			if TabPage:IsA("ScrollingFrame") then TabPage.Visible = true end
+		end
+	else
+		-- Original Animation Logic
+		Elements.Visible = true
+		task.wait(1.1)
+		TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 390, 0, 90)}):Play()
+		task.wait(0.3)
+		TweenService:Create(LoadingFrame.Title, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+		TweenService:Create(LoadingFrame.Subtitle, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+		TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+		task.wait(0.1)
+		TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)}):Play()
+		TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {ImageTransparency = 0.6}):Play()
 
-	Elements.Visible = true
+		Topbar.BackgroundTransparency = 1
+		Topbar.Divider.Size = UDim2.new(0, 0, 0, 1)
+		Topbar.Divider.BackgroundColor3 = SelectedTheme.ElementStroke
+		Topbar.CornerRepair.BackgroundTransparency = 1
+		Topbar.Title.TextTransparency = 1
+		Topbar.Search.ImageTransparency = 1
+		if Topbar:FindFirstChild('Settings') then
+			Topbar.Settings.ImageTransparency = 1
+		end
+		Topbar.ChangeSize.ImageTransparency = 1
+		Topbar.Hide.ImageTransparency = 1
 
-
-	task.wait(1.1)
-	TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 390, 0, 90)}):Play()
-	task.wait(0.3)
-	TweenService:Create(LoadingFrame.Title, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-	TweenService:Create(LoadingFrame.Subtitle, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-	TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-	task.wait(0.1)
-	TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)}):Play()
-	TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {ImageTransparency = 0.6}):Play()
-
-	Topbar.BackgroundTransparency = 1
-	Topbar.Divider.Size = UDim2.new(0, 0, 0, 1)
-	Topbar.Divider.BackgroundColor3 = SelectedTheme.ElementStroke
-	Topbar.CornerRepair.BackgroundTransparency = 1
-	Topbar.Title.TextTransparency = 1
-	Topbar.Search.ImageTransparency = 1
-	if Topbar:FindFirstChild('Settings') then
-		Topbar.Settings.ImageTransparency = 1
-	end
-	Topbar.ChangeSize.ImageTransparency = 1
-	Topbar.Hide.ImageTransparency = 1
-
-
-	task.wait(0.5)
-	Topbar.Visible = true
-	TweenService:Create(Topbar, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
-	TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
-	task.wait(0.1)
-	TweenService:Create(Topbar.Divider, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, 0, 0, 1)}):Play()
-	TweenService:Create(Topbar.Title, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-	task.wait(0.05)
-	TweenService:Create(Topbar.Search, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
-	task.wait(0.05)
-	if Topbar:FindFirstChild('Settings') then
-		TweenService:Create(Topbar.Settings, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
+		task.wait(0.5)
+		Topbar.Visible = true
+		TweenService:Create(Topbar, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
+		TweenService:Create(Topbar.CornerRepair, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
+		task.wait(0.1)
+		TweenService:Create(Topbar.Divider, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, 0, 0, 1)}):Play()
+		TweenService:Create(Topbar.Title, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
 		task.wait(0.05)
+		TweenService:Create(Topbar.Search, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
+		task.wait(0.05)
+		if Topbar:FindFirstChild('Settings') then
+			TweenService:Create(Topbar.Settings, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
+			task.wait(0.05)
+		end
+		TweenService:Create(Topbar.ChangeSize, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
+		task.wait(0.05)
+		TweenService:Create(Topbar.Hide, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
+		task.wait(0.3)
 	end
-	TweenService:Create(Topbar.ChangeSize, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
-	task.wait(0.05)
-	TweenService:Create(Topbar.Hide, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
-	task.wait(0.3)
 
 	if dragBar then
 		TweenService:Create(dragBarCosmetic, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.7}):Play()
@@ -3591,9 +3590,10 @@ function RayfieldLibrary:CreateWindow(Settings)
 		end
 	end
 
-	local success, result = pcall(function()
+	pcall(function()
 		createSettings(Window)
 	end)
+	-- [[ REPLACEMENT END ]]
 
 	if not success then warn('Rayfield had an issue creating settings.') end
 
