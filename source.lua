@@ -3507,8 +3507,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 			end
 		end)
 
-	-- If Preview is true, load instantly
 	if Settings.Preview then
+		-- Instant Load Logic
 		LoadingFrame.Visible = false
 		Main.Visible = true
 		Main.BackgroundTransparency = 0
@@ -3531,8 +3531,8 @@ function RayfieldLibrary:CreateWindow(Settings)
 		for _, TabPage in ipairs(Elements:GetChildren()) do
 			if TabPage:IsA("ScrollingFrame") then TabPage.Visible = true end
 		end
-	else 
-		-- If Preview is false, run the normal animation
+	else
+		-- Original Animation Logic (Now inside an ELSE block)
 		Elements.Visible = true
 		task.wait(1.1)
 		TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 390, 0, 90)}):Play()
@@ -3574,7 +3574,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 		task.wait(0.05)
 		TweenService:Create(Topbar.Hide, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
 		task.wait(0.3)
-	end -- This "end" closes the if/else logic
+	end
 
 	if not success then warn('Rayfield had an issue creating settings.') end
 
