@@ -3532,7 +3532,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 			if TabPage:IsA("ScrollingFrame") then TabPage.Visible = true end
 		end
 	else
-		-- Original Animation Logic (Now inside an ELSE block)
+		-- Original Animation Logic (Now safely tucked inside the ELSE)
 		Elements.Visible = true
 		task.wait(1.1)
 		TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 390, 0, 90)}):Play()
@@ -3574,9 +3574,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 		task.wait(0.05)
 		TweenService:Create(Topbar.Hide, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
 		task.wait(0.3)
-	end
-
-	if not success then warn('Rayfield had an issue creating settings.') end
+	end -- This "end" is vital for the logic to work!
 
 	return Window
 end
