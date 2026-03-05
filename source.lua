@@ -1692,22 +1692,27 @@ function RayfieldLibrary:CreateWindow(Settings)
 		end
 	end
 
-	Topbar.Visible = false
-	Elements.Visible = false
-	LoadingFrame.Visible = true
-
-	if not Settings.DisableRayfieldPrompts then
-		task.spawn(function()
-			while true do
-				task.wait(math.random(180, 600))
-				RayfieldLibrary:Notify({
-					Title = "Rayfield Interface",
-					Content = "Enjoying this UI library? Find it at sirius.menu/discord",
-					Duration = 7,
-					Image = 4370033185,
-				})
-			end
-		end)
+	-- If Preview is true, skip straight to the GUI
+	if Settings.Preview then
+		Topbar.Visible = true
+		Elements.Visible = true
+		LoadingFrame.Visible = false
+		
+		-- Ensure the main window isn't invisible/transparent
+		if Main then
+			Main.GroupTransparency = 0
+		end
+		
+		-- Show the dragbar immediately
+		if dragBar then
+			dragBar.Visible = true
+			dragBarCosmetic.BackgroundTransparency = 0
+		end
+	else
+		-- Otherwise, perform the standard Rayfield loading sequence
+		Topbar.Visible = false
+		Elements.Visible = false
+		LoadingFrame.Visible = true
 	end
 
 	pcall(function()
