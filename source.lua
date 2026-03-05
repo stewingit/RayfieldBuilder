@@ -1692,42 +1692,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 		end
 	end
 
-	if Settings.Preview then
-		-- 1. Setup Instant UI State
-		LoadingFrame.Visible = false
-		Main.Visible = true
-		Main.BackgroundTransparency = 0
-		Main.Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)
-		Main.Shadow.Image.ImageTransparency = 0.6
-		
-		Topbar.Visible = true
-		Topbar.BackgroundTransparency = 0
-		Topbar.CornerRepair.BackgroundTransparency = 0
-		Topbar.Divider.Size = UDim2.new(1, 0, 0, 1)
-		Topbar.Title.TextTransparency = 0
-		Topbar.Search.ImageTransparency = 0.8
-		
-		if Topbar:FindFirstChild('Settings') then
-			Topbar.Settings.ImageTransparency = 0.8
-		end
-		Topbar.ChangeSize.ImageTransparency = 0.8
-		Topbar.Hide.ImageTransparency = 0.8
-		
-		Elements.Visible = true
-		Elements.GroupTransparency = 0
-		
-		for _, TabPage in ipairs(Elements:GetChildren()) do
-			if TabPage:IsA("ScrollingFrame") then TabPage.Visible = true end
-		end
-
-		-- 2. IMPORTANT: Return the window here so the script stops and skip animations
-		return Window 
-	else
-		-- 3. This only runs if Preview is NOT true
-		Topbar.Visible = false
-		Elements.Visible = false
-		LoadingFrame.Visible = true
-	end
+	Topbar.Visible = false
+	Elements.Visible = false
+	LoadingFrame.Visible = true
 
 	if not Settings.DisableRayfieldPrompts then
 		task.spawn(function()
