@@ -4015,3 +4015,29 @@ task.delay(4, function()
 end)
 
 return RayfieldLibrary
+
+if Settings.Preview then
+    task.spawn(function()
+        repeat task.wait() until Main and LoadingFrame and Elements
+        
+        -- Instant UI Update: Bypass loading animation
+        LoadingFrame.Visible = false
+        Main.Visible = true
+        Main.BackgroundTransparency = 0
+        Main.Shadow.Image.ImageTransparency = 0.6 -- Default shadow transparency
+        
+        -- Set final size based on platform
+        Main.Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)
+        Main.Topbar.Size = UDim2.new(0, 500, 0, 45)
+        
+        -- Ensure all elements are visible immediately
+        Elements.Visible = true
+        for _, TabPage in ipairs(Elements:GetChildren()) do
+            if TabPage:IsA("ScrollingFrame") then
+                TabPage.Visible = true
+            end
+        end
+        
+        if debugX then warn("Rayfield | Preview Mode Active: Loading bypassed") end
+    end)
+end
