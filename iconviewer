@@ -119,7 +119,7 @@ IdInput.Name = "IdInput"
 IdInput.Size = UDim2.new(1, -110, 0, 40)
 IdInput.Position = UDim2.new(0, 15, 0, 5)
 IdInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-IdInput.PlaceholderText = "Enter Keywords or ID..."
+IdInput.PlaceholderText = "Enter Asset ID..."
 IdInput.TextColor3 = Color3.new(1, 1, 1)
 IdInput.Font = Enum.Font.Gotham
 IdInput.Parent = AssetSection
@@ -129,7 +129,7 @@ local AssetSearchBtn = Instance.new("TextButton")
 AssetSearchBtn.Size = UDim2.new(0, 80, 0, 40)
 AssetSearchBtn.Position = UDim2.new(1, -95, 0, 5)
 AssetSearchBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-AssetSearchBtn.Text = "Search"
+AssetSearchBtn.Text = "Search ID"
 AssetSearchBtn.TextColor3 = Color3.new(1, 1, 1)
 AssetSearchBtn.Font = Enum.Font.GothamBold
 AssetSearchBtn.Parent = AssetSection
@@ -185,12 +185,14 @@ end)
 
 local function addAssetResult(name, id)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -5, 0, 35)
+    btn.Size = UDim2.new(1, -5, 0, 45) -- Increased height slightly for wrapped text
     btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     btn.Text = "  " .. name
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.TextXAlignment = Enum.TextXAlignment.Left
     btn.Font = Enum.Font.Gotham
+    btn.TextSize = 12
+    btn.TextWrapped = true
     btn.Parent = AssetScroll
     Instance.new("UICorner").Parent = btn
     
@@ -202,39 +204,34 @@ end
 
 AssetSearchBtn.MouseButton1Click:Connect(function()
     local query = IdInput.Text
-    if query == "" then return end
+    if query == "" or not tonumber(query) then return end
     
     for _, v in pairs(AssetScroll:GetChildren()) do
         if v:IsA("TextButton") then v:Destroy() end
     end
 
-    if tonumber(query) then
-        setAssetPreview(query)
-        local loadingBtn = addAssetResult("Searching...", query)
-        
-        task.spawn(function()
-            local success, info = pcall(function()
-                return MarketplaceService:GetProductInfo(tonumber(query))
-            end)
-            if success and info then
-                loadingBtn.Text = "  Asset Found: " .. info.Name
-            else
-                loadingBtn.Text = "  Asset Found: Unknown Asset"
-            end
-        end)
-        return
-    end
-
+    setAssetPreview(query)
+    local loadingBtn = addAssetResult("Checking Asset...", query)
+    
     task.spawn(function()
-        local url = "https://catalog.roproxy.com/v1/search/items/details?Category=11&Keyword=" .. HttpService:UrlEncode(query)
-        local success, response = pcall(function() return game:HttpGet(url) end)
-        if success then
-            local data = HttpService:JSONDecode(response)
-            if data and data.data then
-                for _, item in pairs(data.data) do
-                    addAssetResult(item.name, item.id)
-                end
+        local success, info = pcall(function()
+            return MarketplaceService:GetProductInfo(tonumber(query))
+        end)
+        
+        if success and info then
+            local isSupported = (info.AssetTypeId == 1 or info.AssetTypeId == 13)
+            local statusText = isSupported and "Supported by rayfield" or "Not supported by rayfield"
+            
+            -- Updated button text format: Name, ID, Supported/Not supported
+            loadingBtn.Text = string.format("  %s, %s, %s", info.Name, query, statusText)
+            
+            if isSupported then
+                loadingBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
+            else
+                loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
             end
+        else
+            loadingBtn.Text = "  Asset Found: Unknown Asset (" .. query .. ")"
         end
     end)
 end)
