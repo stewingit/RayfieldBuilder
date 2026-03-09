@@ -1,4 +1,4 @@
-local queryArg = ... -- Captures arguments passed via loadstring()("argument")
+local queryArg = ... 
 
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -13,14 +13,14 @@ if not success or not Icons then
     return
 end
 
--- Revised logic for "What counts as a supported Roblox Icon"
-local function checkAssetSupport(assetTypeId)
-    -- 1: Image, 13: Decal, 34: Plugin/Library Image
-    local supportedIds = {1, 13, 34}
-    return table.find(supportedIds, assetTypeId) ~= nil
+-- Improved Support Check Logic
+local function checkSupport(typeId)
+    -- 1: Image, 13: Decal, 2: UserAd, 11: Shirt, 12: Pants, 62: Sticker
+    local supportedIds = {1, 2, 11, 12, 13, 62}
+    return table.find(supportedIds, typeId) ~= nil
 end
 
--- Global Search Logic (Unified for UI and headless search)
+-- Global Search Logic
 getgenv().search = function(query)
     local results = {
         LucideExists = false,
@@ -28,19 +28,17 @@ getgenv().search = function(query)
         Query = query
     }
     
-    -- Check Lucide Library
-    if Icons["48px"] and Icons["48px"][query] then
+    if Icons["48px"][query] then
         results.LucideExists = true
     end
 
-    -- Check Roblox API
     if tonumber(query) then
         local s, info = pcall(function() return MarketplaceService:GetProductInfo(tonumber(query)) end)
         if s and info then
             results.RobloxInfo = {
                 Name = info.Name,
-                IsSupported = checkAssetSupport(info.AssetTypeId),
-                AssetTypeId = info.AssetTypeId
+                IsSupported = checkSupport(info.AssetTypeId),
+                AssetType = info.AssetTypeId
             }
         end
     end
@@ -49,7 +47,7 @@ getgenv().search = function(query)
     return results
 end
 
--- HEADLESS MODE: If queryArg is provided, run search and exit
+-- Check if we should skip UI and just search
 if queryArg and type(queryArg) == "string" and queryArg ~= "" then
     search(queryArg)
     return 
@@ -259,12 +257,11 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
     local loadingBtn = addAssetResult("Checking Asset...", query)
     
     task.spawn(function()
-        local res = getgenv().search(query)
+        local data = getgenv().search(query)
+        local info = data.RobloxInfo
         
-        if res.RobloxInfo then
-            local info = res.RobloxInfo
+        if info then
             local statusText = info.IsSupported and "Supported" or "Not Supported"
-            
             loadingBtn.Text = string.format("  %s | %s", info.Name, statusText)
             
             if info.IsSupported then
@@ -279,7 +276,7 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- UI Icon Creation Logic
+-- Icon Rendering logic
 for name, data in pairs(Icons["48px"]) do
     local btn = Instance.new("ImageButton")
     btn.Name = name
@@ -315,7 +312,7 @@ for name, data in pairs(Icons["48px"]) do
     end)
 end
 
--- Tab and Search Listeners
+-- Final UI Interactivity
 SearchBar:GetPropertyChangedSignal("Text"):Connect(function()
     local query = SearchBar.Text:lower()
     for _, item in pairs(Scroll:GetChildren()) do
