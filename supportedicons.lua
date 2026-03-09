@@ -67,6 +67,12 @@ getgenv().search = function(query)
     return results
 end
 
+-- HANDLE ARGUMENT MODE (Used by your external script)
+if queryArg and type(queryArg) == "string" and queryArg ~= "" then
+    -- Return the result immediately to the calling script
+    return getgenv().search(queryArg)
+end
+
 -- UI CODE START
 local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local Parent = (gethui and gethui()) or CoreGui or PlayerGui
@@ -255,15 +261,20 @@ local function addAssetResult(name)
     return btn
 end
 
-local function PerformAssetSearch(query)
+AssetSearchBtn.MouseButton1Click:Connect(function()
+    local query = IdInput.Text
     if query == "" then return end
+    
     for _, v in pairs(AssetScroll:GetChildren()) do
         if v:IsA("TextButton") then v:Destroy() end
     end
+
     local loadingBtn = addAssetResult("Searching...")
+    
     task.spawn(function()
         local data = getgenv().search(query)
         loadingBtn.Text = "  " .. data.Status
+        
         if data.RobloxInfo then
             setAssetPreview(query)
             loadingBtn.TextColor3 = data.RobloxInfo.IsSupported and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 100, 100)
@@ -274,10 +285,6 @@ local function PerformAssetSearch(query)
             loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
         end
     end)
-end
-
-AssetSearchBtn.MouseButton1Click:Connect(function()
-    PerformAssetSearch(IdInput.Text)
 end)
 
 -- Initialize Lucide Icons
@@ -328,13 +335,11 @@ end)
 LucideBtn.MouseButton1Click:Connect(function()
     LucideSection.Visible = true; AssetSection.Visible = false
     LucideBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45); AssetBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    LucideBtn.TextColor3 = Color3.new(1, 1, 1); AssetBtn.TextColor3 = Color3.new(0.6, 0.6, 0.6)
 end)
 
 AssetBtn.MouseButton1Click:Connect(function()
     LucideSection.Visible = false; AssetSection.Visible = true
     AssetBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45); LucideBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    AssetBtn.TextColor3 = Color3.new(1, 1, 1); LucideBtn.TextColor3 = Color3.new(0.6, 0.6, 0.6)
 end)
 
 AssetListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -350,28 +355,3 @@ CloseBtn.BackgroundTransparency = 1
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = MainFrame
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
--- Handle the command/search navigation logic
-if queryArg and type(queryArg) == "string" and queryArg ~= "" then
-    if tonumber(queryArg) then
-        -- NAVIGATE TO ASSET TAB
-        LucideSection.Visible = false
-        AssetSection.Visible = true
-        AssetBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        AssetBtn.TextColor3 = Color3.new(1, 1, 1)
-        LucideBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        LucideBtn.TextColor3 = Color3.new(0.6, 0.6, 0.6)
-        IdInput.Text = queryArg
-        -- Automatically show preview if it's a number
-        setAssetPreview(queryArg)
-    else
-        -- NAVIGATE TO LUCIDE TAB (Default)
-        LucideSection.Visible = true
-        AssetSection.Visible = false
-        LucideBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        LucideBtn.TextColor3 = Color3.new(1, 1, 1)
-        AssetBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        AssetBtn.TextColor3 = Color3.new(0.6, 0.6, 0.6)
-        SearchBar.Text = queryArg
-    end
-end
