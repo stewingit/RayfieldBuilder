@@ -13,7 +13,7 @@ if not success or not Icons then
     return
 end
 
--- Improved Support Check Logic
+-- Shared Support Logic
 local function checkSupport(typeId)
     local supportedIds = {1, 2, 11, 12, 13, 62}
     for _, id in ipairs(supportedIds) do
@@ -22,20 +22,22 @@ local function checkSupport(typeId)
     return false
 end
 
--- Global Search Logic (Registered Immediately)
+-- Global Search Logic
 getgenv().search = function(query)
     local results = {
         LucideExists = false,
         RobloxInfo = nil,
-        Query = query
+        Query = query,
+        Status = "No results found"
     }
     
-    -- Check Lucide
+    -- 1. Check Lucide Library
     if Icons["48px"] and Icons["48px"][query] then
         results.LucideExists = true
+        results.Status = "Lucide Icon Found: " .. query
     end
 
-    -- Check Roblox Asset
+    -- 2. Check Roblox Asset ID
     local assetId = tonumber(query)
     if assetId then
         local s, info = pcall(function() 
@@ -43,11 +45,15 @@ getgenv().search = function(query)
         end)
         
         if s and info then
+            local supported = checkSupport(info.AssetTypeId)
             results.RobloxInfo = {
                 Name = info.Name,
-                IsSupported = checkSupport(info.AssetTypeId),
+                IsSupported = supported,
                 AssetType = info.AssetTypeId
             }
+            results.Status = string.format("Roblox Asset: %s | %s", info.Name, supported and "Supported" or "Not Supported")
+        else
+            results.Status = "Roblox Error: Asset ID not found"
         end
     end
     
@@ -55,13 +61,15 @@ getgenv().search = function(query)
     return results
 end
 
--- HANDLE ARGUMENT MODE
+-- HANDLE ARGUMENT MODE (Console/Script search)
 if queryArg and type(queryArg) == "string" and queryArg ~= "" then
     local res = getgenv().search(queryArg)
-    return res -- Exit early with the data
+    print("--- Icon Search Result ---")
+    print(res.Status)
+    return res 
 end
 
--- UI CODE START (Only runs if no queryArg)
+-- UI CODE START
 local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local Parent = (gethui and gethui()) or CoreGui or PlayerGui
 
@@ -234,7 +242,7 @@ AssetPreview.MouseButton1Click:Connect(function()
     end
 end)
 
-local function addAssetResult(name, id)
+local function addAssetResult(name)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -5, 0, 45)
     btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
@@ -246,10 +254,6 @@ local function addAssetResult(name, id)
     btn.TextWrapped = true
     btn.Parent = AssetScroll
     Instance.new("UICorner").Parent = btn
-    
-    btn.MouseButton1Click:Connect(function()
-        setAssetPreview(id)
-    end)
     return btn
 end
 
@@ -261,28 +265,27 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
         if v:IsA("TextButton") then v:Destroy() end
     end
 
-    local loadingBtn = addAssetResult("Searching...", query)
+    local loadingBtn = addAssetResult("Searching...")
     
     task.spawn(function()
         local data = getgenv().search(query)
         
         if data.RobloxInfo then
-            local info = data.RobloxInfo
             setAssetPreview(query)
-            local statusText = info.IsSupported and "Supported" or "Not Supported"
-            loadingBtn.Text = string.format("  %s | %s", info.Name, statusText)
-            loadingBtn.TextColor3 = info.IsSupported and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 100, 100)
+            loadingBtn.Text = "  " .. data.Status
+            loadingBtn.TextColor3 = data.RobloxInfo.IsSupported and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 100, 100)
+            loadingBtn.MouseButton1Click:Connect(function() setAssetPreview(query) end)
         elseif data.LucideExists then
-            loadingBtn.Text = "  Found in Lucide Library"
+            loadingBtn.Text = "  " .. data.Status
             loadingBtn.TextColor3 = Color3.fromRGB(200, 200, 255)
         else
-            loadingBtn.Text = "  No results found"
+            loadingBtn.Text = "  " .. data.Status
             loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
         end
     end)
 end)
 
--- Initialize Lucide Icons in UI
+-- Initialize Lucide Icons
 for name, data in pairs(Icons["48px"]) do
     local btn = Instance.new("ImageButton")
     btn.Name = name
@@ -318,7 +321,6 @@ for name, data in pairs(Icons["48px"]) do
     end)
 end
 
--- UI Logic... (rest of search bar and tab switching)
 SearchBar:GetPropertyChangedSignal("Text"):Connect(function()
     local query = SearchBar.Text:lower()
     for _, item in pairs(Scroll:GetChildren()) do
