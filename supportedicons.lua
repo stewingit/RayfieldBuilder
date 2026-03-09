@@ -15,12 +15,14 @@ end
 
 -- Improved Support Check Logic
 local function checkSupport(typeId)
-    -- 1: Image, 13: Decal, 2: UserAd, 11: Shirt, 12: Pants, 62: Sticker
     local supportedIds = {1, 2, 11, 12, 13, 62}
-    return table.find(supportedIds, typeId) ~= nil
+    for _, id in ipairs(supportedIds) do
+        if id == typeId then return true end
+    end
+    return false
 end
 
--- Global Search Logic
+-- Global Search Logic (Registered Immediately)
 getgenv().search = function(query)
     local results = {
         LucideExists = false,
@@ -28,12 +30,18 @@ getgenv().search = function(query)
         Query = query
     }
     
-    if Icons["48px"][query] then
+    -- Check Lucide
+    if Icons["48px"] and Icons["48px"][query] then
         results.LucideExists = true
     end
 
-    if tonumber(query) then
-        local s, info = pcall(function() return MarketplaceService:GetProductInfo(tonumber(query)) end)
+    -- Check Roblox Asset
+    local assetId = tonumber(query)
+    if assetId then
+        local s, info = pcall(function() 
+            return MarketplaceService:GetProductInfo(assetId) 
+        end)
+        
         if s and info then
             results.RobloxInfo = {
                 Name = info.Name,
@@ -47,13 +55,13 @@ getgenv().search = function(query)
     return results
 end
 
--- Check if we should skip UI and just search
+-- HANDLE ARGUMENT MODE
 if queryArg and type(queryArg) == "string" and queryArg ~= "" then
-    search(queryArg)
-    return 
+    local res = getgenv().search(queryArg)
+    return res -- Exit early with the data
 end
 
--- UI CODE START
+-- UI CODE START (Only runs if no queryArg)
 local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local Parent = (gethui and gethui()) or CoreGui or PlayerGui
 
@@ -247,36 +255,34 @@ end
 
 AssetSearchBtn.MouseButton1Click:Connect(function()
     local query = IdInput.Text
-    if query == "" or not tonumber(query) then return end
+    if query == "" then return end
     
     for _, v in pairs(AssetScroll:GetChildren()) do
         if v:IsA("TextButton") then v:Destroy() end
     end
 
-    setAssetPreview(query)
-    local loadingBtn = addAssetResult("Checking Asset...", query)
+    local loadingBtn = addAssetResult("Searching...", query)
     
     task.spawn(function()
         local data = getgenv().search(query)
-        local info = data.RobloxInfo
         
-        if info then
+        if data.RobloxInfo then
+            local info = data.RobloxInfo
+            setAssetPreview(query)
             local statusText = info.IsSupported and "Supported" or "Not Supported"
             loadingBtn.Text = string.format("  %s | %s", info.Name, statusText)
-            
-            if info.IsSupported then
-                loadingBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
-            else
-                loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-            end
+            loadingBtn.TextColor3 = info.IsSupported and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 100, 100)
+        elseif data.LucideExists then
+            loadingBtn.Text = "  Found in Lucide Library"
+            loadingBtn.TextColor3 = Color3.fromRGB(200, 200, 255)
         else
-            loadingBtn.Text = "  Error: Asset not found"
+            loadingBtn.Text = "  No results found"
             loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
         end
     end)
 end)
 
--- Icon Rendering logic
+-- Initialize Lucide Icons in UI
 for name, data in pairs(Icons["48px"]) do
     local btn = Instance.new("ImageButton")
     btn.Name = name
@@ -312,7 +318,7 @@ for name, data in pairs(Icons["48px"]) do
     end)
 end
 
--- Final UI Interactivity
+-- UI Logic... (rest of search bar and tab switching)
 SearchBar:GetPropertyChangedSignal("Text"):Connect(function()
     local query = SearchBar.Text:lower()
     for _, item in pairs(Scroll:GetChildren()) do
@@ -325,13 +331,11 @@ end)
 LucideBtn.MouseButton1Click:Connect(function()
     LucideSection.Visible = true; AssetSection.Visible = false
     LucideBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45); AssetBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    LucideBtn.TextColor3 = Color3.new(1,1,1); AssetBtn.TextColor3 = Color3.new(0.6,0.6,0.6)
 end)
 
 AssetBtn.MouseButton1Click:Connect(function()
     LucideSection.Visible = false; AssetSection.Visible = true
     AssetBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45); LucideBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    AssetBtn.TextColor3 = Color3.new(1,1,1); LucideBtn.TextColor3 = Color3.new(0.6,0.6,0.6)
 end)
 
 AssetListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
