@@ -11,6 +11,34 @@ if not success or not Icons then
     return
 end
 
+-- Global Search Logic (Option 3: Global Table Return)
+getgenv().search = function(query)
+    local results = {
+        LucideExists = false,
+        RobloxInfo = nil, -- Will hold {Name, IsSupported}
+        Query = query
+    }
+    
+    -- Check Lucide
+    if Icons["48px"][query] then
+        results.LucideExists = true
+    end
+
+    -- Check Roblox Asset
+    if tonumber(query) then
+        local s, info = pcall(function() return MarketplaceService:GetProductInfo(tonumber(query)) end)
+        if s and info then
+            results.RobloxInfo = {
+                Name = info.Name,
+                IsSupported = (info.AssetTypeId == 1 or info.AssetTypeId == 13)
+            }
+        end
+    end
+    
+    getgenv().LastSearch = results
+    return results
+end
+
 local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local Parent = (gethui and gethui()) or CoreGui or PlayerGui
 
@@ -40,7 +68,7 @@ local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, -40, 0, 40)
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "Credits to Stew"
+TitleLabel.Text = "Icons Supported by Rayfield"
 TitleLabel.TextColor3 = Color3.new(1, 1, 1)
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextSize = 16
@@ -185,7 +213,7 @@ end)
 
 local function addAssetResult(name, id)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -5, 0, 45) -- Increased height slightly for wrapped text
+    btn.Size = UDim2.new(1, -5, 0, 45)
     btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     btn.Text = "  " .. name
     btn.TextColor3 = Color3.new(1, 1, 1)
@@ -220,10 +248,10 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
         
         if success and info then
             local isSupported = (info.AssetTypeId == 1 or info.AssetTypeId == 13)
-            local statusText = isSupported and "Supported by rayfield" or "Not supported by rayfield"
+            local statusText = isSupported and "Supported" or "Not Supported"
             
-            -- Updated button text format: Name, ID, Supported/Not supported
-            loadingBtn.Text = string.format("  %s, %s, %s", info.Name, query, statusText)
+            -- UI Display: [Name] | [Status]
+            loadingBtn.Text = string.format("  %s | %s", info.Name, statusText)
             
             if isSupported then
                 loadingBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
@@ -231,7 +259,8 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
                 loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
             end
         else
-            loadingBtn.Text = "  Asset Found: Unknown Asset (" .. query .. ")"
+            loadingBtn.Text = "  Error: Asset not found"
+            loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
         end
     end)
 end)
