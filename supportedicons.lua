@@ -67,12 +67,10 @@ getgenv().search = function(query)
     return results
 end
 
--- HANDLE ARGUMENT MODE (Console/Script search)
+-- HANDLE ARGUMENT MODE (Used by your external script)
 if queryArg and type(queryArg) == "string" and queryArg ~= "" then
-    local res = getgenv().search(queryArg)
-    print("--- Icon Search Result ---")
-    print(res.Status)
-    return res 
+    -- Return the result immediately to the calling script
+    return getgenv().search(queryArg)
 end
 
 -- UI CODE START
