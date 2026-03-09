@@ -67,12 +67,6 @@ getgenv().search = function(query)
     return results
 end
 
--- HANDLE ARGUMENT MODE (Used by your external script)
-if queryArg and type(queryArg) == "string" and queryArg ~= "" then
-    -- Return the result immediately to the calling script
-    -- We don't return here if we want the UI to actually show up via the same script call
-end
-
 -- UI CODE START
 local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local Parent = (gethui and gethui()) or CoreGui or PlayerGui
@@ -360,7 +354,7 @@ CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 -- Handle the command/search navigation logic
 if queryArg and type(queryArg) == "string" and queryArg ~= "" then
     if tonumber(queryArg) then
-        -- It's a number, force switch to Assets tab
+        -- NAVIGATE TO ASSET TAB
         LucideSection.Visible = false
         AssetSection.Visible = true
         AssetBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
@@ -368,10 +362,16 @@ if queryArg and type(queryArg) == "string" and queryArg ~= "" then
         LucideBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
         LucideBtn.TextColor3 = Color3.new(0.6, 0.6, 0.6)
         IdInput.Text = queryArg
-        -- Trigger search automatically
-        task.defer(function() PerformAssetSearch(queryArg) end)
+        -- Automatically show preview if it's a number
+        setAssetPreview(queryArg)
     else
-        -- It's text, stay on Lucide but fill the search
+        -- NAVIGATE TO LUCIDE TAB (Default)
+        LucideSection.Visible = true
+        AssetSection.Visible = false
+        LucideBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        LucideBtn.TextColor3 = Color3.new(1, 1, 1)
+        AssetBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        AssetBtn.TextColor3 = Color3.new(0.6, 0.6, 0.6)
         SearchBar.Text = queryArg
     end
 end
