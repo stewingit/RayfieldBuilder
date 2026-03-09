@@ -28,16 +28,10 @@ getgenv().search = function(query)
         LucideExists = false,
         RobloxInfo = nil,
         Query = query,
-        Status = "No results found"
+        Status = "Unsupported | " .. query .. " | Not Found"
     }
     
-    -- 1. Check Lucide Library
-    if Icons["48px"] and Icons["48px"][query] then
-        results.LucideExists = true
-        results.Status = "Lucide Icon Found: " .. query
-    end
-
-    -- 2. Check Roblox Asset ID
+    -- 1. Check Roblox Asset ID (Numerical)
     local assetId = tonumber(query)
     if assetId then
         local s, info = pcall(function() 
@@ -51,10 +45,22 @@ getgenv().search = function(query)
                 IsSupported = supported,
                 AssetType = info.AssetTypeId
             }
-            results.Status = string.format("Roblox Asset: %s | %s", info.Name, supported and "Supported" or "Not Supported")
+            results.Status = string.format("Roblox Asset | %s | %s", info.Name, supported and "Supported" or "Unsupported")
+            getgenv().LastSearch = results
+            return results
         else
-            results.Status = "Roblox Error: Asset ID not found"
+            results.Status = "Roblox Error | " .. query .. " | ID Not Found"
+            getgenv().LastSearch = results
+            return results
         end
+    end
+
+    -- 2. Check Lucide Library (String)
+    if Icons["48px"] and Icons["48px"][query] then
+        results.LucideExists = true
+        results.Status = "Lucide Icon | " .. query .. " | Supported"
+    else
+        results.Status = "Lucide Icon | " .. query .. " | Unsupported"
     end
     
     getgenv().LastSearch = results
@@ -269,17 +275,15 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
     
     task.spawn(function()
         local data = getgenv().search(query)
+        loadingBtn.Text = "  " .. data.Status
         
         if data.RobloxInfo then
             setAssetPreview(query)
-            loadingBtn.Text = "  " .. data.Status
             loadingBtn.TextColor3 = data.RobloxInfo.IsSupported and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 100, 100)
             loadingBtn.MouseButton1Click:Connect(function() setAssetPreview(query) end)
         elseif data.LucideExists then
-            loadingBtn.Text = "  " .. data.Status
             loadingBtn.TextColor3 = Color3.fromRGB(200, 200, 255)
         else
-            loadingBtn.Text = "  " .. data.Status
             loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
         end
     end)
