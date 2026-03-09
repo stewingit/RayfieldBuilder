@@ -9,38 +9,37 @@ local success, Icons = pcall(function()
 end)
 
 if not success or not Icons then
-    warn("Rayfield Icon Browser: Failed to load icons library.")
+    warn("Rayfield Icon Browser: Failed to load icons.")
     return
 end
 
--- Global Search Logic
+-- Revised logic for "What counts as a supported Roblox Icon"
+local function checkAssetSupport(assetTypeId)
+    -- 1: Image, 13: Decal, 34: Plugin/Library Image
+    local supportedIds = {1, 13, 34}
+    return table.find(supportedIds, assetTypeId) ~= nil
+end
+
+-- Global Search Logic (Unified for UI and headless search)
 getgenv().search = function(query)
     local results = {
         LucideExists = false,
         RobloxInfo = nil,
-        Query = tostring(query)
+        Query = query
     }
     
     -- Check Lucide Library
-    if Icons["48px"][query] then
+    if Icons["48px"] and Icons["48px"][query] then
         results.LucideExists = true
     end
 
-    -- Check Roblox Asset
-    local id = tonumber(query)
-    if id then
-        local s, info = pcall(function() 
-            return MarketplaceService:GetProductInfo(id) 
-        end)
-        
+    -- Check Roblox API
+    if tonumber(query) then
+        local s, info = pcall(function() return MarketplaceService:GetProductInfo(tonumber(query)) end)
         if s and info then
-            -- Types: 1 = Image, 13 = Decal, 11 = Icon. Rayfield supports these.
-            local supportedTypes = {1, 11, 13}
-            local isSupported = table.find(supportedTypes, info.AssetTypeId) ~= nil
-            
             results.RobloxInfo = {
                 Name = info.Name,
-                IsSupported = isSupported,
+                IsSupported = checkAssetSupport(info.AssetTypeId),
                 AssetTypeId = info.AssetTypeId
             }
         end
@@ -50,13 +49,13 @@ getgenv().search = function(query)
     return results
 end
 
--- COMMAND-ONLY MODE: If an argument is passed, search and exit.
-if queryArg ~= nil and tostring(queryArg) ~= "" then
-    search(tostring(queryArg))
+-- HEADLESS MODE: If queryArg is provided, run search and exit
+if queryArg and type(queryArg) == "string" and queryArg ~= "" then
+    search(queryArg)
     return 
 end
 
--- UI CODE START (Only runs if NO argument was passed)
+-- UI CODE START
 local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local Parent = (gethui and gethui()) or CoreGui or PlayerGui
 
@@ -260,13 +259,19 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
     local loadingBtn = addAssetResult("Checking Asset...", query)
     
     task.spawn(function()
-        local searchRes = getgenv().search(query)
-        local info = searchRes.RobloxInfo
+        local res = getgenv().search(query)
         
-        if info then
+        if res.RobloxInfo then
+            local info = res.RobloxInfo
             local statusText = info.IsSupported and "Supported" or "Not Supported"
+            
             loadingBtn.Text = string.format("  %s | %s", info.Name, statusText)
-            loadingBtn.TextColor3 = info.IsSupported and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 100, 100)
+            
+            if info.IsSupported then
+                loadingBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
+            else
+                loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+            end
         else
             loadingBtn.Text = "  Error: Asset not found"
             loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -274,7 +279,8 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
-local function createIcon(name, data)
+-- UI Icon Creation Logic
+for name, data in pairs(Icons["48px"]) do
     local btn = Instance.new("ImageButton")
     btn.Name = name
     btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
@@ -309,8 +315,7 @@ local function createIcon(name, data)
     end)
 end
 
-for name, data in pairs(Icons["48px"]) do createIcon(name, data) end
-
+-- Tab and Search Listeners
 SearchBar:GetPropertyChangedSignal("Text"):Connect(function()
     local query = SearchBar.Text:lower()
     for _, item in pairs(Scroll:GetChildren()) do
