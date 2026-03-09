@@ -9,7 +9,7 @@ local success, Icons = pcall(function()
 end)
 
 if not success or not Icons then
-    warn("Rayfield Icon Browser: Failed to load icons.")
+    warn("Rayfield Icon Browser: Failed to load icons library.")
     return
 end
 
@@ -18,7 +18,7 @@ getgenv().search = function(query)
     local results = {
         LucideExists = false,
         RobloxInfo = nil,
-        Query = query
+        Query = tostring(query)
     }
     
     -- Check Lucide Library
@@ -26,14 +26,17 @@ getgenv().search = function(query)
         results.LucideExists = true
     end
 
-    -- Check Roblox Asset (Improved Type Checking)
-    local assetId = tonumber(query)
-    if assetId then
-        local s, info = pcall(function() return MarketplaceService:GetProductInfo(assetId) end)
+    -- Check Roblox Asset
+    local id = tonumber(query)
+    if id then
+        local s, info = pcall(function() 
+            return MarketplaceService:GetProductInfo(id) 
+        end)
+        
         if s and info then
-            -- 1: Image, 11: Icon, 13: Decal (All generally supported by ImageLabels)
-            local validTypes = {1, 11, 13}
-            local isSupported = table.find(validTypes, info.AssetTypeId) ~= nil
+            -- Types: 1 = Image, 13 = Decal, 11 = Icon. Rayfield supports these.
+            local supportedTypes = {1, 11, 13}
+            local isSupported = table.find(supportedTypes, info.AssetTypeId) ~= nil
             
             results.RobloxInfo = {
                 Name = info.Name,
@@ -47,14 +50,13 @@ getgenv().search = function(query)
     return results
 end
 
--- Check if we should skip UI and just search
--- We use tostring() and match to ensure "0" or valid strings trigger it
+-- COMMAND-ONLY MODE: If an argument is passed, search and exit.
 if queryArg ~= nil and tostring(queryArg) ~= "" then
     search(tostring(queryArg))
-    return -- STOP HERE, DO NOT LOAD UI
+    return 
 end
 
--- UI CODE START (Only runs if no queryArg was provided)
+-- UI CODE START (Only runs if NO argument was passed)
 local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local Parent = (gethui and gethui()) or CoreGui or PlayerGui
 
@@ -258,22 +260,13 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
     local loadingBtn = addAssetResult("Checking Asset...", query)
     
     task.spawn(function()
-        local success, info = pcall(function()
-            return MarketplaceService:GetProductInfo(tonumber(query))
-        end)
+        local searchRes = getgenv().search(query)
+        local info = searchRes.RobloxInfo
         
-        if success and info then
-            local validTypes = {1, 11, 13}
-            local isSupported = table.find(validTypes, info.AssetTypeId) ~= nil
-            local statusText = isSupported and "Supported" or "Not Supported"
-            
+        if info then
+            local statusText = info.IsSupported and "Supported" or "Not Supported"
             loadingBtn.Text = string.format("  %s | %s", info.Name, statusText)
-            
-            if isSupported then
-                loadingBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
-            else
-                loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-            end
+            loadingBtn.TextColor3 = info.IsSupported and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(255, 100, 100)
         else
             loadingBtn.Text = "  Error: Asset not found"
             loadingBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
