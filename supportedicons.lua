@@ -355,3 +355,18 @@ CloseBtn.BackgroundTransparency = 1
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = MainFrame
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+-- Handle the command/search navigation logic
+if queryArg and type(queryArg) == "string" and queryArg ~= "" then
+    if tonumber(queryArg) then
+        -- It's a number, switch to Assets
+        LucideSection.Visible = false
+        AssetSection.Visible = true
+        AssetBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        LucideBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        IdInput.Text = queryArg
+    else
+        -- It's text, stay on Lucide but fill the search
+        SearchBar.Text = queryArg
+    end
+end
