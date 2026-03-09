@@ -21,16 +21,24 @@ getgenv().search = function(query)
         Query = query
     }
     
+    -- Check Lucide Library
     if Icons["48px"][query] then
         results.LucideExists = true
     end
 
-    if tonumber(query) then
-        local s, info = pcall(function() return MarketplaceService:GetProductInfo(tonumber(query)) end)
+    -- Check Roblox Asset (Improved Type Checking)
+    local assetId = tonumber(query)
+    if assetId then
+        local s, info = pcall(function() return MarketplaceService:GetProductInfo(assetId) end)
         if s and info then
+            -- 1: Image, 11: Icon, 13: Decal (All generally supported by ImageLabels)
+            local validTypes = {1, 11, 13}
+            local isSupported = table.find(validTypes, info.AssetTypeId) ~= nil
+            
             results.RobloxInfo = {
                 Name = info.Name,
-                IsSupported = (info.AssetTypeId == 1 or info.AssetTypeId == 13)
+                IsSupported = isSupported,
+                AssetTypeId = info.AssetTypeId
             }
         end
     end
@@ -40,8 +48,9 @@ getgenv().search = function(query)
 end
 
 -- Check if we should skip UI and just search
-if queryArg and type(queryArg) == "string" and queryArg ~= "" then
-    search(queryArg)
+-- We use tostring() and match to ensure "0" or valid strings trigger it
+if queryArg ~= nil and tostring(queryArg) ~= "" then
+    search(tostring(queryArg))
     return -- STOP HERE, DO NOT LOAD UI
 end
 
@@ -254,7 +263,8 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
         end)
         
         if success and info then
-            local isSupported = (info.AssetTypeId == 1 or info.AssetTypeId == 13)
+            local validTypes = {1, 11, 13}
+            local isSupported = table.find(validTypes, info.AssetTypeId) ~= nil
             local statusText = isSupported and "Supported" or "Not Supported"
             
             loadingBtn.Text = string.format("  %s | %s", info.Name, statusText)
