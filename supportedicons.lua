@@ -1,3 +1,5 @@
+local queryArg = ... -- Captures arguments passed via loadstring()("argument")
+
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local CoreGui = game:GetService("CoreGui")
@@ -11,20 +13,18 @@ if not success or not Icons then
     return
 end
 
--- Global Search Logic (Option 3: Global Table Return)
+-- Global Search Logic
 getgenv().search = function(query)
     local results = {
         LucideExists = false,
-        RobloxInfo = nil, -- Will hold {Name, IsSupported}
+        RobloxInfo = nil,
         Query = query
     }
     
-    -- Check Lucide
     if Icons["48px"][query] then
         results.LucideExists = true
     end
 
-    -- Check Roblox Asset
     if tonumber(query) then
         local s, info = pcall(function() return MarketplaceService:GetProductInfo(tonumber(query)) end)
         if s and info then
@@ -39,6 +39,13 @@ getgenv().search = function(query)
     return results
 end
 
+-- Check if we should skip UI and just search
+if queryArg and type(queryArg) == "string" and queryArg ~= "" then
+    search(queryArg)
+    return -- STOP HERE, DO NOT LOAD UI
+end
+
+-- UI CODE START (Only runs if no queryArg was provided)
 local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local Parent = (gethui and gethui()) or CoreGui or PlayerGui
 
@@ -250,7 +257,6 @@ AssetSearchBtn.MouseButton1Click:Connect(function()
             local isSupported = (info.AssetTypeId == 1 or info.AssetTypeId == 13)
             local statusText = isSupported and "Supported" or "Not Supported"
             
-            -- UI Display: [Name] | [Status]
             loadingBtn.Text = string.format("  %s | %s", info.Name, statusText)
             
             if isSupported then
