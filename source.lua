@@ -2064,7 +2064,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 			function ButtonValue:Destroy()
 				if Button then
 					Button:Destroy()
-					Button = nil -- Clears reference
+					Button = nil
 				end
 			end
 
@@ -2572,15 +2572,28 @@ function RayfieldLibrary:CreateWindow(Settings)
 			end)
 
 			function InputSettings:Set(text)
-				Input.InputFrame.InputBox.Text = text
-				InputSettings.CurrentValue = text
+				if Input then
+					Input.InputFrame.InputBox.Text = text
+					InputSettings.CurrentValue = text
 
-				local Success, Response = pcall(function()
-					InputSettings.Callback(text)
-				end)
+					local Success, Response = pcall(function()
+						InputSettings.Callback(text)
+					end)
 
-				if not InputSettings.Ext then
-					SaveConfiguration()
+					if not InputSettings.Ext then
+						SaveConfiguration()
+					end
+				end
+			end
+
+			-- New Destroy Function
+			function InputSettings:Destroy()
+				if Input then
+					if InputSettings.Flag then
+						RayfieldLibrary.Flags[InputSettings.Flag] = nil
+					end
+					Input:Destroy()
+					Input = nil
 				end
 			end
 
@@ -2591,8 +2604,10 @@ function RayfieldLibrary:CreateWindow(Settings)
 			end
 
 			Rayfield.Main:GetPropertyChangedSignal('BackgroundColor3'):Connect(function()
-				Input.InputFrame.BackgroundColor3 = SelectedTheme.InputBackground
-				Input.InputFrame.UIStroke.Color = SelectedTheme.InputStroke
+				if Input then
+					Input.InputFrame.BackgroundColor3 = SelectedTheme.InputBackground
+					Input.InputFrame.UIStroke.Color = SelectedTheme.InputStroke
+				end
 			end)
 
 			return InputSettings
