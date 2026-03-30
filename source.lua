@@ -760,6 +760,7 @@ local MPrompt = Rayfield:FindFirstChild('Prompt')
 local Topbar = Main.Topbar
 local Elements = Main.Elements
 local LoadingFrame = Main.LoadingFrame
+LoadingFrame.Visible = false
 local TabList = Main.TabList
 local dragBar = Rayfield:FindFirstChild('Drag')
 local dragInteract = dragBar and dragBar.Interact or nil
@@ -3405,19 +3406,10 @@ function RayfieldLibrary:CreateWindow(Settings)
 	Elements.Visible = true
 
 
-	-- Set the Main GUI to its final size immediately
-Main.Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)
-Main.Shadow.Image.ImageTransparency = 0.6
-
--- Hide the loading elements immediately
-LoadingFrame.Visible = false
-LoadingFrame.Title.TextTransparency = 1
-LoadingFrame.Subtitle.TextTransparency = 1
-LoadingFrame.Version.TextTransparency = 1
-
--- Ensure the main elements and tab list are visible
-Elements.Visible = true
-TabList.Visible = true
+	TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 390, 0, 90)}):Play()
+	task.wait(0.4)
+	TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)}):Play()
+	TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {ImageTransparency = 0.6}):Play()
 
 	Topbar.BackgroundTransparency = 1
 	Topbar.Divider.Size = UDim2.new(0, 0, 0, 1)
