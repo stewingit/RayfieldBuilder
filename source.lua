@@ -2055,9 +2055,17 @@ function RayfieldLibrary:CreateWindow(Settings)
 				TweenService:Create(Button.ElementIndicator, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {TextTransparency = 0.9}):Play()
 			end)
 
-			function ButtonValue:Set(NewButton)
+				function ButtonValue:Set(NewButton)
 				Button.Title.Text = NewButton
 				Button.Name = NewButton
+			end
+
+			-- New Destroy Function
+			function ButtonValue:Destroy()
+				if Button then
+					Button:Destroy()
+					Button = nil -- Clears reference
+				end
 			end
 
 			return ButtonValue
