@@ -1525,9 +1525,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 	if Rayfield:FindFirstChild('Loading') then
 		if getgenv and not getgenv().rayfieldCached then
 			Rayfield.Enabled = true
-			Rayfield.Loading.Visible = false
-
-			task.wait(0)
+			
 			Rayfield.Loading.Visible = false
 		end
 	end
