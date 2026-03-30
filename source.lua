@@ -2331,33 +2331,50 @@ function RayfieldLibrary:CreateWindow(Settings)
 			return ColorPickerSettings
 		end
 
-		-- Section
-		function Tab:CreateSection(SectionName)
+-- Section
+function Tab:CreateSection(SectionName)
 
-			local SectionValue = {}
+    local SectionValue = {}
+    local SectionSpace -- Defined here so the Destroy function can access it
 
-			if SDone then
-				local SectionSpace = Elements.Template.SectionSpacing:Clone()
-				SectionSpace.Visible = true
-				SectionSpace.Parent = TabPage
-			end
+    if SDone then
+        SectionSpace = Elements.Template.SectionSpacing:Clone()
+        SectionSpace.Visible = true
+        SectionSpace.Parent = TabPage
+    end
 
-			local Section = Elements.Template.SectionTitle:Clone()
-			Section.Title.Text = SectionName
-			Section.Visible = true
-			Section.Parent = TabPage
+    local Section = Elements.Template.SectionTitle:Clone()
+    Section.Title.Text = SectionName
+    Section.Visible = true
+    Section.Parent = TabPage
 
-			Section.Title.TextTransparency = 1
-			TweenService:Create(Section.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0.4}):Play()
+    Section.Title.TextTransparency = 1
+    TweenService:Create(Section.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0.4}):Play()
 
-			function SectionValue:Set(NewSection)
-				Section.Title.Text = NewSection
-			end
+    -- Update Section Text
+    function SectionValue:Set(NewSection)
+        if Section then
+            Section.Title.Text = NewSection
+        end
+    end
 
-			SDone = true
+    -- Delete Section Command
+    function SectionValue:Destroy()
+        if Section then
+            Section:Destroy()
+            Section = nil
+        end
+        
+        if SectionSpace then
+            SectionSpace:Destroy()
+            SectionSpace = nil
+        end
+    end
 
-			return SectionValue
-		end
+    SDone = true
+
+    return SectionValue
+end
 
 		-- Divider
 		function Tab:CreateDivider()
