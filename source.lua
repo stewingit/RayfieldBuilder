@@ -25,6 +25,34 @@ local TweenService = getService("TweenService")
 local Players = getService("Players")
 local CoreGui = getService("CoreGui")
 
+-- Loading UI Creation
+local LoadingGui = Instance.new("ScreenGui")
+local LoadingFrame = Instance.new("Frame")
+local LoadingText = Instance.new("TextLabel")
+
+LoadingGui.Name = "RayfieldLoading"
+LoadingGui.Parent = gethui and gethui() or CoreGui
+LoadingGui.DisplayOrder = 999
+
+LoadingFrame.Size = UDim2.new(0, 300, 0, 100)
+LoadingFrame.Position = UDim2.new(0.5, -150, 0.5, -50)
+LoadingFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+LoadingFrame.BorderSizePixel = 0
+LoadingFrame.Parent = LoadingGui
+
+-- Add a corner for style
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = Tool.new(0, 8)
+UICorner.Parent = LoadingFrame
+
+LoadingText.Size = UDim2.new(1, 0, 1, 0)
+LoadingText.BackgroundTransparency = 1
+LoadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadingText.TextSize = 18
+LoadingText.Font = Enum.Font.GothamMedium
+LoadingText.Text = "Initialising Rayfield..."
+LoadingText.Parent = LoadingFrame
+
 -- Loads and executes a function hosted on a remote URL.
 -- Cancels the request if the requested URL takes too long to respond.
 -- Errors with the function are caught and logged to the output
@@ -805,20 +833,25 @@ do
 				return nil
 			end
 
-			if nextMissing() then
-				task.spawn(function()
-					while true do
-						local id = nextMissing()
-						if not id then break end
-						writefile(AssetPath.."/"..tostring(id)..".png", requestFunc({Url = assetFiles[id], Method = "GET"}).Body)
-						task.wait()
-					end
-				end)
-
-				while nextMissing() do
-					task.wait(0.1)
-				end
-			end
+		-- Locate this block in your code:
+if nextMissing() then
+    task.spawn(function()
+        while true do
+            local id = nextMissing()
+            if not id then break end
+            
+            -- Update the text to show which asset is being fetched
+            LoadingText.Text = "Downloading Assets: " .. tostring(id)
+            
+            writefile(AssetPath.."/"..tostring(id)..".png", requestFunc({Url = assetFiles[id], Method = "GET"}).Body)
+            task.wait()
+        end
+    end)
+    
+    while nextMissing() do
+        task.wait(0.1)
+    end
+end
 
 			for id, _ in assetFiles do
 				local success, asset = pcall(getcustomasset, AssetPath.."/"..tostring(id)..".png")
@@ -1672,7 +1705,19 @@ end
 function RayfieldLibrary:CreateWindow(Settings)
 	if Rayfield:FindFirstChild('Loading') then
 		if getgenv and not getgenv().rayfieldCached then
-			Rayfield.Enabled = true
+			-- Finalize Initialization
+LoadingText.Text = "Ready!"
+task.wait(0.5)
+
+-- Smoothly fade out or just destroy
+TweenService:Create(LoadingFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+TweenService:Create(LoadingText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+
+task.delay(0.5, function()
+    LoadingGui:Destroy()
+end)
+
+Rayfield.Enabled = true -- Existing line in your code
 			Rayfield.Loading.Visible = false -- User Edit: Instant load
 		end
 	end
