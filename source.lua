@@ -894,21 +894,8 @@ local dragOffset = 255
 local dragOffsetMobile = 150
 
 Rayfield.DisplayOrder = 100
-Rayfield.Parent = (RunService:IsStudio() and Players.LocalPlayer:WaitForChild("PlayerGui")) or CoreGui
-
-LoadingFrame.Visible = true
+LoadingFrame.Visible = false -- User Edit
 LoadingFrame.Version.Text = Release
-		
--- Simple Rotation Animation
-task.spawn(function()
-    local Spinner = LoadingFrame:FindFirstChild("Settings") or LoadingFrame:FindFirstChild("Icon")
-    if Spinner then
-        while LoadingFrame.Visible do
-            Spinner.Rotation = Spinner.Rotation + 5
-            task.wait(0.01)
-        end
-    end
-end)
 
 -- Thanks to Latte Softworks for the Lucide integration for Roblox
 local Icons = useStudio and require(script.Parent.icons) or loadWithTimeout('https://raw.githubusercontent.com/stewingit/RayfieldBuilder/refs/heads/main/icons.lua')
