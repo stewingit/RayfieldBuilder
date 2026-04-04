@@ -760,6 +760,20 @@ if secureMode and not customAssetId then
 	secureNotify("default_asset", "Secure Mode", "You are using the default Rayfield asset ID. Set RAYFIELD_ASSET_ID to a custom upload to avoid detection.")
 end
 
+-- Added Loading Text
+local LoadingAssetsLabel = Instance.new("TextLabel")
+LoadingAssetsLabel.Name = "AssetLoadingLabel"
+LoadingAssetsLabel.Parent = Rayfield
+LoadingAssetsLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+LoadingAssetsLabel.BackgroundTransparency = 1
+LoadingAssetsLabel.Size = UDim2.new(1, 0, 0, 30)
+LoadingAssetsLabel.Position = UDim2.new(0, 0, 0, 10)
+LoadingAssetsLabel.Text = "Loading Assets..."
+LoadingAssetsLabel.TextColor3 = Color3.new(1, 1, 1)
+LoadingAssetsLabel.TextSize = 18
+LoadingAssetsLabel.Font = Enum.Font.SourceSansBold
+LoadingAssetsLabel.ZIndex = 10000
+Rayfield.Enabled = true -- Ensure UI is visible to see the text
 do
 	local AssetPath = RayfieldFolder.."/Assets"
 	local AssetBaseURL = "https://github.com/SiriusSoftwareLtd/Rayfield/blob/main/assets/"
@@ -819,6 +833,7 @@ do
 					task.wait(0.1)
 				end
 			end
+			if LoadingAssetsLabel then LoadingAssetsLabel:Destroy() end
 
 			for id, _ in assetFiles do
 				local success, asset = pcall(getcustomasset, AssetPath.."/"..tostring(id)..".png")
